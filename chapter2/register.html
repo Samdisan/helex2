@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HELIX | RECRUITMENT</title>
+    <link rel="stylesheet" href="../style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Courier+New&display=swap" rel="stylesheet">
+    <style>
+        body { background: #000; color: #ccc; font-family: 'Courier New', monospace; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .container { width: 100%; max-width: 600px; padding: 20px; }
+        .step-section { display: none; } .step-section.current { display: block; animation: fadeIn 0.5s; }
+        input, select { width: 100%; background: #0a0a0a; border: 1px solid #333; color: #fff; padding: 15px; margin-bottom: 20px; font-family: inherit; }
+        .btn-next { width: 100%; padding: 20px; border: 1px solid var(--accent-gold); color: var(--accent-gold); background: transparent; cursor: pointer; text-transform: uppercase; font-weight: bold; }
+        .btn-next:hover { background: var(--accent-gold); color: #000; }
+        @keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1} }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2 style="text-align:center; color:#ffd700; font-family:'Cinzel'; margin-bottom:30px;">PROTOCOL APPLICATION</h2>
+
+        <div id="step-1" class="step-section current">
+            <input type="text" id="inp-name" placeholder="CALLSIGN / NAME">
+            <input type="text" id="inp-tg" placeholder="TELEGRAM (@username)">
+            
+            <label style="font-size:0.7rem; color:#00f0ff;">SELECT FACTION:</label>
+            <select id="inp-faction" onchange="updateRoles()">
+                <option value="" disabled selected>-- TARGET FACTION --</option>
+                <option value="OLYMPOS">OLYMPOS</option>
+                <option value="ORIGIN">ORIGIN</option>
+                <option value="THEMIS">THEMIS</option>
+            </select>
+
+            <label style="font-size:0.7rem; color:#00f0ff;">SELECT VACANT POSITION:</label>
+            <select id="inp-role-pref" disabled>
+                <option value="" disabled selected>-- WAITING FOR DATA --</option>
+            </select>
+
+            <button class="btn-next" onclick="nextStep(2)">PROCEED >></button>
+            <div style="text-align:center; margin-top:20px;">
+                <a href="personnel.html" style="color:#666; font-size:0.8rem;">VIEW PERSONNEL DATABASE</a>
+            </div>
+        </div>
+
+        <div id="step-2" class="step-section" style="text-align:center;">
+            <h1 style="color:#0f0;">RECEIVED</h1>
+            <p>Заявку прийнято. Очікуйте підтвердження.</p>
+            <a href="hub.html" class="btn-next" style="display:inline-block; text-decoration:none;">RETURN</a>
+        </div>
+    </div>
+
+    <script>
+        let dbUsers = [];
+        let loreTestData = null;
+
+        // 1. ЗАВАНТАЖУЄМО БАЗУ ПРИ СТАРТІ ТА ПЕРЕВІРЯЄМО ЛОРНИЙ ТЕСТ
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Перевіряємо чи є результати лорного тесту
+            const savedLore = localStorage.getItem('helix_lore_test');
+            if (!savedLore) {
+                // Якщо тест не пройдено - перенаправляємо на тест
+                alert("Спочатку пройдіть тест K.I.R.A.");
+                window.location.href = 'test.html';
+                return;
+            }
+            
+            loreTestData = JSON.parse(savedLore);
+            
+            // Перевіряємо чи тест не застарів (24 години)
+            const testAge = Date.now() - loreTestData.completedAt;
+            if (testAge > 24 * 60 * 60 * 1000) {
+                alert("Результати тесту застаріли. Пройдіть тест знову.");
+                localStorage.removeItem('helix_lore_test');
+                window.location.href = 'test.html';
+                return;
+            }
+            
+            // Показуємо рекомендовану фракцію
+            if (loreTestData.faction && loreTestData.faction !== 'NEUTRAL') {
+                const factionSelect = document.getElementById('inp-faction');
+                factionSelect.value = loreTestData.faction;
+                updateRoles();
+            }
+            
+            try {
+                // Глобальний кеш, що оновлюється щохвилини
+                const cacheKey = Math.floor(Date.now() / 60000);
+                const res = await fetch('../users.json?cache=' + cacheKey);
+                dbUsers = await res.json();
+                console.log("DB Loaded:", dbUsers.length);
+            } catch(e) { console.error("DB Error"); }
+        });
+
+        // 2. ФІЛЬТРУЄМО РОЛІ
+        function updateRoles() {
+            const faction = document.getElementById('inp-faction').value;
+            const select = document.getElementById('inp-role-pref');
+            select.innerHTML = "<option value='' disabled selected>-- SELECT ROLE --</option>";
+            select.disabled = false;
+
+            // Шукаємо користувачів цієї фракції, які позначені як 'free'
+            const available = dbUsers.filter(u => 
+                (u.faction === faction) && 
+                (u.booking_status === 'free')
+            );
+
+            if (available.length === 0) {
+                const opt = document.createElement('option');
+                opt.innerText = "NO VACANCIES";
+                opt.disabled = true;
+                select.appendChild(opt);
+            } else {
+                available.forEach(u => {
+                    const opt = document.createElement('option');
+                    opt.value = u.role + " (" + u.name + ")"; // Передаємо "Роль (Ім'я персонажа)"
+                    opt.innerText = u.role + " // " + u.name;
+                    select.appendChild(opt);
+                });
+            }
+        }
+
+        async function nextStep(n) {
+            if(n===2) {
+                // Формуємо PSY масив з результатів тесту
+                const psyScores = loreTestData ? [
+                    loreTestData.scores.L || 0, 
+                    loreTestData.scores.H || 0, 
+                    loreTestData.scores.M || 0,
+                    loreTestData.scores.C || 0
+                ] : [0, 0, 0, 0];
+                
+                const data = {
+                    name: document.getElementById('inp-name').value,
+                    tg: document.getElementById('inp-tg').value,
+                    faction_pref: document.getElementById('inp-faction').value,
+                    role_pref: document.getElementById('inp-role-pref').value,
+                    anon: false, 
+                    psy: psyScores,
+                    lore: loreTestData ? {
+                        role: loreTestData.role,
+                        faction: loreTestData.faction,
+                        scores: loreTestData.scores
+                    } : {}
+                };
+
+                if(!data.name || !data.role_pref) { alert("ЗАПОВНІТЬ ВСІ ПОЛЯ"); return; }
+                if(!data.tg) { alert("ВВЕДІТЬ TELEGRAM"); return; }
+
+                const btn = document.querySelector('.btn-next');
+                btn.innerText = "SENDING...";
+                btn.disabled = true;
+                
+                try {
+                    const response = await fetch('../register_handler.php', {
+                        method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)
+                    });
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        // Очищаємо дані тесту після успішної подачі
+                        localStorage.removeItem('helix_lore_test');
+                        
+                        document.getElementById('step-1').style.display='none';
+                        document.getElementById('step-2').style.display='block';
+                    } else {
+                        alert("Помилка: " + (result.message || "Невідома помилка"));
+                        btn.innerText = "PROCEED >>";
+                        btn.disabled = false;
+                    }
+                } catch(e) {
+                    alert("Помилка з'єднання з сервером");
+                    btn.innerText = "PROCEED >>";
+                    btn.disabled = false;
+                }
+            }
+        }
+    </script>
+</body>
+</html>

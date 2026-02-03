@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HELIX | K.I.R.A. TEST</title>
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        body { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background-color: #000; padding: 20px; }
+        
+        .test-container { width: 100%; max-width: 600px; text-align: center; }
+        
+        /* ЧИТАБЕЛЬНИЙ БЛОК ПИТАНЬ */
+        .question-box {
+            background: #111; /* Непрозорий фон */
+            border: 1px solid var(--accent-cyan);
+            padding: 40px 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.8);
+        }
+        
+        .q-text { 
+            font-size: 1.4rem; /* Великий шрифт */
+            color: #fff;       /* Яскраво білий */
+            margin-bottom: 40px; 
+            line-height: 1.6;
+            font-weight: bold;
+        }
+        
+        .options-grid { display: grid; gap: 15px; }
+        
+        .option-btn {
+            background: #222;
+            border: 1px solid #555;
+            color: #ddd;
+            padding: 20px;
+            cursor: pointer;
+            text-align: left;
+            transition: 0.3s;
+            font-family: var(--font-term);
+            font-size: 1rem;
+            line-height: 1.4;
+        }
+        .option-btn:hover {
+            border-color: var(--accent-cyan);
+            color: #fff;
+            background: var(--accent-cyan);
+            color: #000;
+        }
+        
+        #result-box { display: none; text-align: center; animation: fadeIn 1s; padding: 30px; border: 1px solid var(--accent-gold); background: #111; }
+        .res-title { font-size: 2.5rem; color: var(--accent-gold); margin-bottom: 15px; text-transform: uppercase; }
+        .res-desc { color: #fff; font-size: 1.2rem; margin-bottom: 30px; line-height: 1.5; }
+        
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h2 style="color: var(--accent-cyan); margin-bottom: 30px; letter-spacing: 3px;">K.I.R.A. ANALYSIS</h2>
+        
+        <div id="quiz-box" class="question-box">
+            <div id="q-text" class="q-text">ЗАВАНТАЖЕННЯ ПИТАННЯ...</div>
+            <div id="options" class="options-grid"></div>
+        </div>
+
+        <div id="result-box">
+            <div class="res-title" id="res-role">ROLE</div>
+            <div class="res-desc" id="res-desc">...</div>
+            <a href="register.html" class="btn">ПРОДОВЖИТИ РЕЄСТРАЦІЮ</a>
+        </div>
+    </div>
+
+    <script src="../system.js"></script>
+    <script>
+        const questions = [
+            { t: "Ви бачите пораненого члена команди, але у вас наказ евакуювати дані. Ворог близько. Ваші дії?", 
+              ops: [{t:"Виконати наказ (Дані - пріоритет)", s:"L"}, {t:"Врятувати людину (Життя - пріоритет)", s:"H"}, {t:"Забрати дані і використати пораненого як приманку", s:"M"}] },
+            { t: "Що для вас є вищим законом?", 
+              ops: [{t:"Протокол та Порядок", s:"L"}, {t:"Свобода волі", s:"C"}, {t:"Виживання найсильнішого", s:"M"}] },
+            { t: "Влада - це...", 
+              ops: [{t:"Відповідальність", s:"L"}, {t:"Інструмент для досягнення мети", s:"M"}, {t:"Ілюзія", s:"H"}] },
+             { t: "Яка ваша реакція на невідоме?", 
+              ops: [{t:"Аналіз і вивчення", s:"L"}, {t:"Страх і агресія", s:"M"}, {t:"Цікавість і адаптація", s:"C"}] }
+        ];
+
+        let cur = 0;
+        let scores = { L:0, H:0, M:0, C:0 };
+
+        function loadQ() {
+            if (cur >= questions.length) return showRes();
+            const q = questions[cur];
+            document.getElementById('q-text').innerText = q.t;
+            const opsDiv = document.getElementById('options');
+            opsDiv.innerHTML = "";
+            q.ops.forEach(op => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.innerText = "> " + op.t;
+                btn.onclick = () => { scores[op.s]++; cur++; loadQ(); };
+                opsDiv.appendChild(btn);
+            });
+        }
+
+        function showRes() {
+            document.getElementById('quiz-box').style.display = 'none';
+            document.getElementById('result-box').style.display = 'block';
+            
+            let role = "CIVILIAN";
+            let desc = "Ви намагаєтесь вижити, не втручаючись у велику гру.";
+            let faction = "NEUTRAL";
+            
+            if (scores.L >= scores.H && scores.L >= scores.M) { 
+                role = "ADMINISTRATOR"; 
+                desc = "Ви - голос розуму. Для вас порядок важливіший за емоції. Ваша фракція: OLYMPOS."; 
+                faction = "OLYMPOS";
+            }
+            else if (scores.H >= scores.L && scores.H >= scores.M) { 
+                role = "MEDIC"; 
+                desc = "Ви рятуєте те, що залишилось від людяності. Ваша фракція: ORIGIN."; 
+                faction = "ORIGIN";
+            }
+            else if (scores.M >= scores.L && scores.M >= scores.H) { 
+                role = "MERCENARY"; 
+                desc = "Ви вирішуєте проблеми. За плату або заради вигоди. Ваша фракція: THEMIS."; 
+                faction = "THEMIS";
+            }
+            else { 
+                role = "ANOMALY"; 
+                desc = "Ваші дії непередбачувані. Система не може вас класифікувати."; 
+                faction = "NEUTRAL";
+            }
+            
+            // Зберігаємо результати тесту в localStorage для передачі у заявку
+            const loreData = {
+                scores: scores,
+                role: role,
+                faction: faction,
+                completedAt: Date.now()
+            };
+            localStorage.setItem('helix_lore_test', JSON.stringify(loreData));
+            
+            document.getElementById('res-role').innerText = role;
+            document.getElementById('res-desc').innerText = desc;
+        }
+        
+        loadQ();
+    </script>
+</body>
+</html>

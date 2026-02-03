@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HELIX | PROFILE</title>
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        /* ОСНОВНІ СТИЛІ */
+        body { 
+            background: #050505; color: #ddd; min-height: 100vh; 
+            display: flex; flex-direction: column; align-items: center; 
+            font-family: 'Courier New', monospace; margin: 0;
+        }
+        
+        .nav-bar { 
+            width: 100%; padding: 15px; background: #111; border-bottom: 1px solid #333; 
+            display: flex; justify-content: space-between; box-sizing: border-box; 
+        }
+
+        .id-card { 
+            width: 100%; max-width: 500px; margin: 20px; 
+            background: #0f0f0f; border: 1px solid #333; border-top: 4px solid var(--accent-cyan);
+            padding: 30px; box-sizing: border-box; position: relative;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        /* ТАЙМЕР (СТИЛІ) */
+        .timer-box {
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid var(--accent-red);
+            padding: 15px; text-align: center;
+            margin-bottom: 25px;
+            animation: pulse-border 2s infinite alternate;
+        }
+        .timer-label { font-size: 0.6rem; color: #666; letter-spacing: 2px; margin-bottom: 5px; text-transform: uppercase; }
+        .timer-digits { 
+            font-size: 2rem; font-weight: bold; color: var(--accent-red); 
+            font-family: 'Courier New', monospace; letter-spacing: 3px;
+            text-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+        }
+        @keyframes pulse-border { from { border-color: #330000; } to { border-color: #ff0000; } }
+
+        /* АВАТАР */
+        .avatar-box { 
+            width: 140px; height: 140px; margin: 0 auto 20px auto; 
+            background: #000; border: 2px solid var(--accent-cyan); 
+            cursor: pointer; position: relative; overflow: hidden;
+        }
+        .avatar-img { width: 100%; height: 100%; object-fit: cover; }
+        .avatar-overlay { 
+            position: absolute; top:0; left:0; width:100%; height:100%; 
+            background:rgba(0,0,0,0.7); display:flex; align-items:center; justify-content:center; 
+            opacity:0; transition:0.3s; font-size:0.7rem; text-align:center; color: #fff;
+        }
+        .avatar-box:hover .avatar-overlay { opacity: 1; }
+
+        /* ІНФО */
+        .info-block { text-align: center; margin-bottom: 30px; }
+        .p-id { font-size: 2rem; color: #fff; letter-spacing: 3px; margin: 0; text-transform: uppercase; }
+        .p-name { font-size: 1.1rem; color: #ccc; margin-top: 5px; font-weight: bold; }
+        .p-role { color: var(--accent-cyan); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 2px; margin-top: 5px; opacity: 0.8; }
+
+        /* КНОПКИ */
+        .btn-action { 
+            display: block; width: 100%; padding: 15px; margin-bottom: 10px; 
+            background: transparent; border: 1px solid #444; color: #ccc; 
+            text-transform: uppercase; cursor: pointer; transition: 0.3s; 
+            font-family: inherit; font-size: 0.9rem; letter-spacing: 1px;
+        }
+        .btn-history { border-color: var(--accent-gold); color: var(--accent-gold); }
+        .btn-history:hover { background: rgba(255, 215, 0, 0.1); }
+        
+        .btn-term { border-color: var(--accent-cyan); color: var(--accent-cyan); font-weight: bold; text-align: left; padding-left: 20px; }
+        .btn-term:hover { background: rgba(0, 240, 255, 0.1); }
+
+        /* МОДАЛЬНЕ ВІКНО */
+        .modal { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.95); z-index: 200; display: none; 
+            align-items: center; justify-content: center; 
+        }
+        .paper { 
+            background: #111; border: 1px solid var(--accent-gold); 
+            padding: 30px; max-width: 600px; width: 90%; max-height: 80vh; 
+            overflow-y: auto; position: relative; 
+        }
+        .close-paper { position: absolute; top: 15px; right: 20px; font-size: 2rem; cursor: pointer; color: #666; }
+        .paper-content { font-family: 'Courier New', monospace; line-height: 1.6; color: #ccc; white-space: pre-wrap; text-align: justify; }
+
+        .qr-section { margin-top: 20px; text-align: center; opacity: 0.5; }
+    </style>
+</head>
+<body>
+
+    <div class="nav-bar">
+        <span>ID CARD</span>
+        <a href="hub.html" style="color:#666; text-decoration:none;">[ EXIT ]</a>
+    </div>
+
+    <div class="id-card">
+        <div class="timer-box">
+            <div class="timer-label">PROTOCOL COUNTDOWN</div>
+            <div id="mission-timer" class="timer-digits">CONNECTING...</div>
+        </div>
+
+        <div class="avatar-box" onclick="document.getElementById('upFile').click()">
+            <img src="" id="av-img" class="avatar-img" onerror="this.src='https://placehold.co/200x200/000/333?text=PHOTO'">
+            <div class="avatar-overlay">CHANGE PHOTO</div>
+            <input type="file" id="upFile" style="display:none" onchange="uploadAvatar()" accept="image/*">
+        </div>
+
+        <div class="info-block">
+            <h1 class="p-id glitch-text" id="d-code">...</h1>
+            <div class="p-name" id="d-name">LOADING...</div>
+            <div class="p-role" id="d-role">...</div>
+        </div>
+
+        <button class="btn-action btn-history" onclick="showHistory()">📂 ВІДКРИТИ ДОСЬЄ</button>
+        <a href="terminal.html" class="btn-action btn-term">>_ ТЕРМІНАЛ ДОСТУПУ</a>
+
+        <div class="qr-section">
+             <img src="" id="qr-img" style="width:60px; border: 1px solid #333; padding: 2px;">
+        </div>
+    </div>
+
+    <div id="modal-hist" class="modal">
+        <div class="paper">
+            <div class="close-paper" onclick="document.getElementById('modal-hist').style.display='none'">×</div>
+            <h2 style="color:var(--accent-gold); margin-top:0;">PERSONAL DOSSIER</h2>
+            <div id="hist-text" class="paper-content">Завантаження...</div>
+        </div>
+    </div>
+
+    <script src="../timer_sync.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const myId = localStorage.getItem('helix_id');
+            if(!myId) { window.location.href="../index.html"; return; }
+
+            try {
+                const res = await fetch('../users.json?t=' + Date.now());
+                const users = await res.json();
+                const user = users.find(u => u.access_code === myId);
+
+                if(user) {
+                    renderUser(user);
+                    localStorage.setItem('helix_user', JSON.stringify(user));
+                }
+            } catch(e) { 
+                const cached = localStorage.getItem('helix_user');
+                if(cached) renderUser(JSON.parse(cached));
+            }
+        });
+
+        function renderUser(u) {
+            document.getElementById('d-code').innerText = u.access_code;
+            document.getElementById('d-name').innerText = u.name;
+            document.getElementById('d-role').innerText = u.role + " // LVL " + u.level;
+            document.getElementById('hist-text').innerText = u.history || "Дані відсутні.";
+            document.getElementById('qr-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${u.access_code}&color=ffffff&bgcolor=000000`;
+            loadAvatar(u.access_code);
+        }
+
+        function showHistory() { document.getElementById('modal-hist').style.display = 'flex'; }
+
+        function loadAvatar(code) {
+            const img = document.getElementById('av-img');
+            img.src = `../uploads/${code}.jpg?t=` + Date.now();
+            img.onerror = () => { img.src = `../uploads/${code}.png?t=` + Date.now(); };
+        }
+
+        async function uploadAvatar() {
+            const file = document.getElementById('upFile').files[0];
+            const code = localStorage.getItem('helix_id');
+            if(!file || !code) return;
+            const formData = new FormData();
+            formData.append('avatar', file);
+            formData.append('access_code', code);
+            try {
+                const res = await fetch('../upload.php', { method:'POST', body:formData });
+                const json = await res.json();
+                if(json.success) { alert("PHOTO SAVED"); loadAvatar(code); } 
+                else { alert("ERROR"); }
+            } catch(e) { alert("OFFLINE ERROR"); }
+        }
+    </script>
+</body>
+</html>
