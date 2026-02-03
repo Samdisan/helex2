@@ -45,6 +45,20 @@
         <h2 style="text-align:center; color:#ffd700; font-family:'Cinzel'; margin-bottom:30px;">PROTOCOL APPLICATION</h2>
 
         <div id="step-1" class="step-section current">
+            <h3 style="color:var(--accent-gold); margin-bottom:16px;">ЛОРНИЙ ТЕСТ</h3>
+            <p style="color:#aaa; margin-bottom:20px;">Спочатку перевірка знань всесвіту HELIX. Відповідайте на питання, щоб продовжити.</p>
+            <div id="lore-test-container" class="lore-test-box"></div>
+            <p id="lore-test-err" class="lore-test-err"></p>
+            <button type="button" class="btn-next" id="btn-lore-submit" onclick="checkLoreTestStep1()" style="margin-top:16px;">ПІДТВЕРДИТИ ВІДПОВІДІ</button>
+            <div style="text-align:center; margin-top:20px;">
+                <a href="personnel.html" style="color:#666; font-size:0.8rem;">VIEW PERSONNEL DATABASE</a>
+            </div>
+        </div>
+
+        <div id="step-2" class="step-section" style="text-align:left; display:none;">
+            <h3 style="color:var(--accent-gold); margin-bottom:16px;">ФОРМА ЗАЯВКИ</h3>
+            <p style="color:#aaa; margin-bottom:20px;">Лорний тест пройдено. Тепер заповніть дані для подачі заявки.</p>
+            
             <input type="text" id="inp-name" placeholder="CALLSIGN / NAME" maxlength="100">
             <div id="err-name" class="field-error" style="display:none;"></div>
             <input type="text" id="inp-tg" placeholder="TELEGRAM (@username або t.me/username)">
@@ -65,49 +79,10 @@
             </select>
             <div id="err-role" class="field-error" style="display:none;"></div>
 
-            <button type="button" class="btn-next" id="btn-submit" onclick="goToTestStep()">ДАЛІ: ЛОРНИЙ ТЕСТ >></button>
-            <p style="color:#666; font-size:0.75rem; margin-top:10px;">На наступному кроці — спочатку лорний тест, потім K.I.R.A., потім відправка заявки.</p>
+            <button type="button" class="btn-next" id="btn-submit" onclick="submitApplication()">ВІДПРАВИТИ ЗАЯВКУ</button>
             <p id="submit-msg" class="msg-error" style="display:none;"></p>
-            <div style="text-align:center; margin-top:20px;">
-                <a href="personnel.html" style="color:#666; font-size:0.8rem;">VIEW PERSONNEL DATABASE</a>
-            </div>
         </div>
 
-        <div id="step-2" class="step-section" style="text-align:left; display:none;">
-            <div class="lore-quest">
-                <div class="quest-title">КВЕСТ: Відкрити доступ</div>
-                <p style="margin:0 0 8px 0;">Система вимагає спочатку верифікації знань всесвіту, потім психопрофілю, потім — подачі заявки.</p>
-                <ol class="quest-steps">
-                    <li>Пройти лорний тест (короткі питання за всесвітом HELIX).</li>
-                    <li>Пройти K.I.R.A. тест (результат буде додано до заявки).</li>
-                    <li>Повернутись сюди і відправити заявку.</li>
-                </ol>
-            </div>
-            <div id="step2-lore-block" style="display:none;">
-                <h3 style="color:var(--accent-gold); margin-bottom:16px;">ЛОРНИЙ ТЕСТ</h3>
-                <p style="color:#aaa; margin-bottom:20px;">Відповідайте на питання, щоб продовжити. Після успішного проходження відкриється доступ до K.I.R.A.</p>
-                <div id="lore-test-container" class="lore-test-box"></div>
-                <p id="lore-test-err" class="lore-test-err"></p>
-                <button type="button" class="btn-next" id="btn-lore-submit" onclick="checkLoreTest()" style="margin-top:16px;">ПІДТВЕРДИТИ ВІДПОВІДІ</button>
-            </div>
-            <div id="step2-test-block" style="display:none; text-align:center;">
-                <h3 style="color:var(--accent-cyan); margin-bottom:16px;">K.I.R.A. — ТЕСТ ПЕРЕД ПОДАННЯМ ЗАЯВКИ</h3>
-                <p style="color:#aaa; margin-bottom:24px; line-height:1.5;">Лорний тест пройдено. Тепер — верифікація психопрофілю. Після проходження ви повернетесь сюди для відправки заявки.</p>
-                <a href="test.html?from=register" class="btn-next" style="display:inline-block; text-decoration:none;">ПРОЙТИ K.I.R.A. ТЕСТ</a>
-            </div>
-            <div id="step2-submit-block" style="display:none; text-align:center;">
-                <p id="step2-summary" style="color:#aaa; margin-bottom:16px;"></p>
-                <p style="color:#0a0; font-size:0.85rem; margin-bottom:16px;">Результат K.I.R.A.: <strong id="step2-kira-type" style="color:var(--accent-gold);"></strong></p>
-                <button type="button" class="btn-next" id="btn-send-application" onclick="sendApplication()">ВІДПРАВИТИ ЗАЯВКУ</button>
-                <p id="step2-msg" class="msg-error" style="display:none; margin-top:12px;"></p>
-            </div>
-        </div>
-
-        <div id="step-3" class="step-section" style="text-align:center; display:none;">
-            <h1 id="step3-title" style="color:#0f0;">RECEIVED</h1>
-            <p id="step3-text">Заявку прийнято. Очікуйте підтвердження.</p>
-            <a href="hub.html" class="btn-next" style="display:inline-block; text-decoration:none;">RETURN</a>
-        </div>
     </div>
 
     <script>
@@ -133,11 +108,10 @@
         }
 
         const DRAFT_KEY = 'helix_register_draft';
-        const KIRA_KEY = 'helix_kira_application';
         const LORE_TEST_KEY = 'helix_lore_test_passed';
 
         var applicationPhaseAudio = null;
-        var loreTestAnswers = {}; // музика "4" протягом кроку заявки, KIRA і подачі
+        var loreTestAnswers = {};
 
         function startApplicationPhaseMusic() {
             if (applicationPhaseAudio) return; // вже грає
@@ -170,16 +144,9 @@
         function setDraft(o) {
             try { sessionStorage.setItem(DRAFT_KEY, JSON.stringify(o)); } catch (e) {}
         }
-        function getKiraResult() {
-            try {
-                const raw = sessionStorage.getItem(KIRA_KEY);
-                return raw ? JSON.parse(raw) : null;
-            } catch (e) { return null; }
-        }
-        function clearDraftAndKira() {
+        function clearDraft() {
             try {
                 sessionStorage.removeItem(DRAFT_KEY);
-                sessionStorage.removeItem(KIRA_KEY);
                 sessionStorage.removeItem(LORE_TEST_KEY);
             } catch (e) {}
         }
@@ -231,7 +198,7 @@
                 });
             });
         }
-        function checkLoreTest() {
+        function checkLoreTestStep1() {
             var errEl = document.getElementById('lore-test-err');
             for (var i = 0; i < LORE_QUESTIONS.length; i++) {
                 var item = LORE_QUESTIONS[i];
@@ -243,14 +210,17 @@
                 }
             }
             setLoreTestPassed();
-            document.getElementById('step2-lore-block').style.display = 'none';
-            document.getElementById('step2-test-block').style.display = 'block';
-            document.getElementById('step2-test-block').style.textAlign = 'center';
             errEl.style.display = 'none';
+            // Переходимо на крок 2 (форма з даними)
+            document.getElementById('step-1').classList.remove('current');
+            document.getElementById('step-1').style.display = 'none';
+            document.getElementById('step-2').style.display = 'block';
+            document.getElementById('step-2').classList.add('current');
+            startApplicationPhaseMusic();
             return true;
         }
 
-        function goToTestStep() {
+        async function submitApplication() {
             const name = (document.getElementById('inp-name').value || '').trim();
             const tg = (document.getElementById('inp-tg').value || '').trim();
             const faction = document.getElementById('inp-faction').value;
@@ -284,68 +254,27 @@
             }
             if (!valid) return;
 
-            setDraft({ name: name, tg: tg, faction_pref: faction, role_pref: rolePref });
-            document.getElementById('step-1').classList.remove('current');
-            document.getElementById('step-1').style.display = 'none';
-            document.getElementById('step-2').style.display = 'block';
-            document.getElementById('step-2').classList.add('current');
-            startApplicationPhaseMusic();
-            // Спочатку лорний тест, потім K.I.R.A., потім відправка заявки
-            var loreBlock = document.getElementById('step2-lore-block');
-            var testBlock = document.getElementById('step2-test-block');
-            var submitBlock = document.getElementById('step2-submit-block');
-            loreBlock.style.display = 'none';
-            testBlock.style.display = 'none';
-            submitBlock.style.display = 'none';
-            var lorePassed = getLoreTestPassed();
-            var kira = getKiraResult();
-            if (!lorePassed) {
-                loreBlock.style.display = 'block';
-                renderLoreTest();
-            } else if (kira && kira.type) {
-                submitBlock.style.display = 'block';
-                document.getElementById('step2-summary').textContent = name + ' · ' + (tg || '—') + ' · ' + faction + ' · ' + rolePref;
-                document.getElementById('step2-kira-type').textContent = kira.type;
-            } else {
-                testBlock.style.display = 'block';
-                testBlock.style.textAlign = 'center';
-            }
-        }
-
-        async function sendApplication() {
-            const draft = getDraft();
-            const kira = getKiraResult();
-            if (!draft || !draft.name || !draft.role_pref) {
-                alert('Дані заявки втрачено. Заповніть форму знову.');
-                return;
-            }
-            if (!kira || !kira.type) {
-                alert('Спочатку пройдіть K.I.R.A. тест. Натисніть «ПРОЙТИ K.I.R.A. ТЕСТ» і поверніться сюди після завершення.');
-                return;
-            }
-            const btn = document.getElementById('btn-send-application');
-            const msgEl = document.getElementById('step2-msg');
-            msgEl.style.display = 'none';
             btn.disabled = true;
             btn.textContent = 'Відправка...';
+            
             try {
                 const res = await fetch('../register_handler.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        name: draft.name,
-                        tg: draft.tg || '',
-                        faction_pref: draft.faction_pref,
-                        role_pref: draft.role_pref,
+                        name: name,
+                        tg: tg || '',
+                        faction_pref: faction,
+                        role_pref: rolePref,
                         anon: false,
-                        psy: kira && kira.type ? [kira.type] : [],
-                        lore: kira && kira.scores ? kira.scores : {}
+                        psy: [],
+                        lore: {}
                     })
                 });
                 const json = await res.json().catch(() => ({}));
                 if (res.ok && json.ok) {
                     playApplicationMusic();
-                    clearDraftAndKira();
+                    clearDraft();
                     // Redirect to hub page after successful submission
                     window.location.href = 'hub.html';
                 } else {
@@ -360,6 +289,7 @@
             btn.textContent = 'ВІДПРАВИТИ ЗАЯВКУ';
         }
 
+
         document.addEventListener('DOMContentLoaded', async () => {
             dbUsers = [];
             try {
@@ -372,36 +302,9 @@
                 console.error('[REGISTER] DB Error:', e);
                 alert(ERR_MSG);
             }
-            const params = new URLSearchParams(window.location.search);
-            if (params.get('step') === '2') {
-                const draft = getDraft();
-                const kira = getKiraResult();
-                const lorePassed = getLoreTestPassed();
-                if (draft && draft.name) {
-                    document.getElementById('step-1').style.display = 'none';
-                    document.getElementById('step-1').classList.remove('current');
-                    document.getElementById('step-2').style.display = 'block';
-                    document.getElementById('step-2').classList.add('current');
-                    var loreBlock = document.getElementById('step2-lore-block');
-                    var testBlock = document.getElementById('step2-test-block');
-                    var submitBlock = document.getElementById('step2-submit-block');
-                    loreBlock.style.display = 'none';
-                    testBlock.style.display = 'none';
-                    submitBlock.style.display = 'none';
-                    if (!lorePassed) {
-                        loreBlock.style.display = 'block';
-                        renderLoreTest();
-                    } else if (kira && kira.type) {
-                        submitBlock.style.display = 'block';
-                        document.getElementById('step2-summary').textContent = draft.name + ' · ' + (draft.tg || '—') + ' · ' + (draft.faction_pref || '') + ' · ' + (draft.role_pref || '');
-                        document.getElementById('step2-kira-type').textContent = kira.type;
-                    } else {
-                        testBlock.style.display = 'block';
-                        testBlock.style.textAlign = 'center';
-                    }
-                    startApplicationPhaseMusic();
-                }
-            }
+            
+            // Завжди починаємо з кроку 1 (лорний тест)
+            renderLoreTest();
         });
 
         async function updateRoles() {
