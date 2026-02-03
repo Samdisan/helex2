@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>HELIX | SYSTEM ROOT</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <style>
+        body { 
+            height: 100vh; display: flex; flex-direction: column; 
+            justify-content: center; align-items: center; 
+            background: #000; overflow: hidden; font-family: 'Courier New', monospace;
+        }
+        .logo-area { text-align: center; margin-bottom: 40px; animation: fadeIn 2s ease-in; }
+        .main-title { 
+            font-size: 4rem; letter-spacing: 10px; margin: 0; color: #fff; 
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.5); 
+        }
+        .subtitle { 
+            color: var(--accent-cyan); font-size: 0.8rem; letter-spacing: 5px; 
+            margin-top: 10px; text-transform: uppercase; 
+        }
+        .nav-container { display: flex; flex-direction: column; gap: 15px; width: 100%; max-width: 350px; z-index: 10; }
+        .nav-btn {
+            display: block; width: 100%; padding: 18px; background: rgba(20, 20, 20, 0.8);
+            border: 1px solid #333; color: #888; text-align: center; text-decoration: none;
+            text-transform: uppercase; letter-spacing: 2px; font-size: 0.85rem; transition: 0.3s;
+            box-sizing: border-box; cursor: pointer;
+        }
+        .nav-btn:hover { border-color: #fff; color: #fff; background: rgba(255, 255, 255, 0.05); }
+        .btn-active { border-color: var(--accent-cyan); color: var(--accent-cyan); font-weight: bold; }
+        .btn-active:hover { background: var(--accent-cyan); color: #000; }
+        .btn-locked { border-color: #222; color: #444; cursor: not-allowed; background: transparent; }
+        .grid-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .btn-small { padding: 15px; font-size: 0.75rem; display: flex; align-items: center; justify-content: center; }
+        .btn-gateway { margin-top: 25px; background: transparent; border: 1px dashed var(--accent-gold); color: var(--accent-gold); }
+        .btn-gateway:hover { background: rgba(255, 215, 0, 0.1); }
+
+        /* MODAL */
+        .overlay-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 100; display: none; flex-direction: column; justify-content: center; align-items: center; }
+        .login-input { width: 250px; padding: 12px; background: #000; border: 1px solid #fff; color: #fff; font-family: inherit; font-size: 1.2rem; text-align: center; margin-bottom: 20px; text-transform: uppercase; outline: none; }
+        .close-btn { position: absolute; top: 30px; right: 30px; color: #555; cursor: pointer; font-size: 3rem; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body>
+    <div class="logo-area">
+        <h1 class="main-title glitch-text" data-text="HELIX">HELIX</h1>
+        <div class="subtitle">INTERACTIVE STORY SYSTEM</div>
+    </div>
+
+    <div class="nav-container">
+        <div class="nav-btn btn-locked">CHAPTER I: ARCTIC [OFFLINE]</div>
+        <a href="chapter2/hub.html" class="nav-btn btn-active">CHAPTER II: PANDORA</a>
+        <div class="grid-row">
+            <a href="lore.html" class="nav-btn btn-small">📂 UNIVERSE DB</a>
+            <a href="declaration.html" class="nav-btn btn-small">⚠️ DECLARATION</a>
+        </div>
+        <a href="https://www.espacepsy.com/projects.html" target="_blank" class="nav-btn">OTHER PROJECTS</a>
+        <a href="https://t.me/espasegame" target="_blank" class="nav-btn">💬 TELEGRAM / FEEDBACK</a>
+        <button class="nav-btn btn-gateway" onclick="openGateway()">[ ACCESS LOGIN ]</button>
+    </div>
+
+    <div id="gateway-screen" class="overlay-screen">
+        <div class="close-btn" onclick="closeGateway()">×</div>
+        <h2 style="color: #fff; margin-bottom: 20px; letter-spacing: 3px;">SYSTEM GATEWAY</h2>
+        <input type="password" id="gateway-input" class="login-input" placeholder="ACCESS CODE">
+        <button class="nav-btn btn-gateway" style="width: 200px; margin-top: 0;" onclick="processGateway()">CONNECT</button>
+        <p id="gateway-msg" style="margin-top: 15px; color: var(--accent-red); height: 20px; font-size: 0.8rem; text-align:center;"></p>
+    </div>
+
+    <script src="system.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+        function openGateway() { document.getElementById('gateway-screen').style.display = 'flex'; document.getElementById('gateway-input').focus(); }
+        function closeGateway() { document.getElementById('gateway-screen').style.display = 'none'; document.getElementById('gateway-msg').innerText = ""; document.getElementById('gateway-input').value = ""; }
+        
+        async function processGateway() {
+            const val = document.getElementById('gateway-input').value.trim();
+            const msg = document.getElementById('gateway-msg');
+            const btn = document.querySelector('#gateway-screen button');
+
+            if (!val) return;
+
+            // 1. ADMIN REDIRECT (Виправлено)
+            if (val === "HELIX2025") {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = 'admin.php';
+                const input = document.createElement('input');
+                input.type = 'hidden'; input.name = 'login_pass'; input.value = val;
+                form.appendChild(input);
+                document.body.appendChild(form);
+                form.submit();
+                return;
+            }
+
+            // 2. PLAYER LOGIN
+            btn.innerText = "CHECKING...";
+            try {
+                const response = await fetch('users.json?t=' + Date.now());
+                if (!response.ok) throw new Error("DB Error");
+                const users = await response.json();
+                const user = users.find(u => u.access_code === val);
+
+                if (user) {
+                    msg.style.color = "#0f0"; msg.innerText = `ACCESS GRANTED: ${user.name}`;
+                    localStorage.setItem('helix_user', JSON.stringify(user));
+                    localStorage.setItem('helix_id', user.access_code);
+                    setTimeout(() => { window.location.href = "chapter2/profile.html"; }, 1000);
+                } else {
+                    throw new Error("INVALID CODE");
+                }
+            } catch (error) {
+                btn.innerText = "CONNECT";
+                msg.style.color = "var(--accent-red)";
+                msg.innerText = "ACCESS DENIED";
+            }
+        }
+        document.getElementById('gateway-input').addEventListener("keypress", (e) => { if (e.key === "Enter") processGateway(); });
+    </script>
+</body>
+</html>
