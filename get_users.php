@@ -1,10 +1,10 @@
 <?php
 // get_users.php — API-проксі для отримання списку гравців без прямого доступу до users.json
-// Серверний кеш: 60 с. Клієнтський: 25 с + ETag для швидкого 304.
+// Серверний кеш: 30 с. Клієнтський: 0 с для завжди свіжих даних + ETag для швидкого 304.
 header('Content-Type: application/json; charset=utf-8');
-$cacheTtl = 60; // серверний кеш, секунд
-$browserMaxAge = 25; // клієнт може тримати копію 25 с (швидкий back/refresh)
-header('Cache-Control: private, max-age=' . $browserMaxAge);
+$cacheTtl = 30; // серверний кеш, секунд (зменшено для швидшого оновлення)
+$browserMaxAge = 0; // клієнт завжди перевіряє сервер (але може отримати 304 Not Modified)
+header('Cache-Control: private, max-age=' . $browserMaxAge . ', must-revalidate');
 
 $file = __DIR__ . '/users.json';
 $cacheFile = __DIR__ . '/.get_users_cache.json';
