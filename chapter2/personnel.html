@@ -403,6 +403,12 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             loadPersonnelData();
+            
+            // Auto-refresh personnel data every 60 seconds for all users
+            setInterval(() => {
+                console.log('[PERSONNEL] Auto-refresh triggered');
+                loadPersonnelData();
+            }, 60000);
         });
 
         function renderColumns() {

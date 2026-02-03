@@ -363,6 +363,12 @@
         }
 
         document.addEventListener('DOMContentLoaded', async () => {
+            // Attach lore test submit handler
+            const btnLoreSubmit = document.getElementById('btn-lore-submit');
+            if (btnLoreSubmit) {
+                btnLoreSubmit.addEventListener('click', checkLoreTest);
+            }
+            
             dbUsers = [];
             try {
                 const url = '../get_users.php?t=' + Date.now() + '&nocache=' + Math.random();
