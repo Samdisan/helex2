@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HELIX | RECRUITMENT</title>
+    <link rel="stylesheet" href="../style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Courier+New&display=swap" rel="stylesheet">
+    <style>
+        body { background: #000; color: #ccc; font-family: 'Courier New', monospace; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .container { width: 100%; max-width: 600px; padding: 20px; }
+        .step-section { display: none; } .step-section.current { display: block; animation: fadeIn 0.5s; }
+        input, select { width: 100%; background: #0a0a0a; border: 1px solid #333; color: #fff; padding: 15px; margin-bottom: 20px; font-family: inherit; }
+        .btn-next { width: 100%; padding: 20px; border: 1px solid var(--accent-gold); color: var(--accent-gold); background: transparent; cursor: pointer; text-transform: uppercase; font-weight: bold; }
+        .btn-next:hover { background: var(--accent-gold); color: #000; }
+        @keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1} }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2 style="text-align:center; color:#ffd700; font-family:'Cinzel'; margin-bottom:10px;">PROTOCOL APPLICATION</h2>
+        <div id="test-status" style="text-align:center; color:#00f0ff; font-size:0.7rem; letter-spacing:2px; margin-bottom:30px;"></div>
+
+        <div id="step-1" class="step-section current">
+            <input type="text" id="inp-name" placeholder="CALLSIGN / NAME">
+            <input type="text" id="inp-tg" placeholder="TELEGRAM (@username)">
+            
+            <label style="font-size:0.7rem; color:#00f0ff;">SELECT FACTION:</label>
+            <select id="inp-faction" onchange="updateRoles()">
+                <option value="" disabled selected>-- TARGET FACTION --</option>
+                <option value="OLYMPOS">OLYMPOS</option>
+                <option value="ORIGIN">ORIGIN</option>
+                <option value="THEMIS">THEMIS</option>
+            </select>
+
+            <label style="font-size:0.7rem; color:#00f0ff;">SELECT VACANT POSITION:</label>
+            <select id="inp-role-pref" disabled>
+                <option value="" disabled selected>-- WAITING FOR DATA --</option>
+            </select>
+
+            <button class="btn-next" onclick="nextStep(2)">PROCEED >></button>
+            <div style="text-align:center; margin-top:20px;">
+                <a href="personnel.html" style="color:#666; font-size:0.8rem;">VIEW PERSONNEL DATABASE</a>
+            </div>
+        </div>
+
+        <div id="step-2" class="step-section" style="text-align:center;">
+            <h1 style="color:#0f0;">RECEIVED</h1>
+            <p>Заявку прийнято. Очікуйте підтвердження.</p>
+            <a href="hub.html" class="btn-next" style="display:inline-block; text-decoration:none;">RETURN</a>
+        </div>
+    </div>
+
+    <script>
+        const TEST_STORAGE_KEY = 'helix_lore_test_v1';
+        let dbUsers = [];
+        let loreTest = null;
+
+        function loadLoreTest() {
+            const raw = localStorage.getItem(TEST_STORAGE_KEY);
+            if (!raw) {
+                alert("Спочатку пройдіть лорний тест K.I.R.A.");
+                window.location.href = 'test.html';
+                return false;
+            }
+            try {
+                loreTest = JSON.parse(raw);
+            } catch (e) {
+                localStorage.removeItem(TEST_STORAGE_KEY);
+                alert("Потрібно повторити лорний тест.");
+                window.location.href = 'test.html';
+                return false;
+            }
+
+            const status = document.getElementById('test-status');
+            if (status && loreTest?.role) {
+                status.innerText = "K.I.R.A. RESULT: " + loreTest.role;
+            }
+            return true;
+        }
+
+        // 1. ЗАВАНТАЖУЄМО БАЗУ ПРИ СТАРТІ
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (!loadLoreTest()) return;
+            try {
+                const res = await fetch('../users.json?t=' + Date.now());
+                dbUsers = await res.json();
+                console.log("DB Loaded:", dbUsers.length);
+            } catch(e) { console.error("DB Error"); }
+        });
+
+        // 2. ФІЛЬТРУЄМО РОЛІ
+        function updateRoles() {
+            const faction = document.getElementById('inp-faction').value;
+            const select = document.getElementById('inp-role-pref');
+            select.innerHTML = "<option value='' disabled selected>-- SELECT ROLE --</option>";
+            select.disabled = false;
+
+            // Шукаємо користувачів цієї фракції, які позначені як 'free'
+            const available = dbUsers.filter(u => 
+                (u.faction === faction) && 
+                (u.booking_status === 'free')
+            );
+
+            if (available.length === 0) {
+                const opt = document.createElement('option');
+                opt.innerText = "NO VACANCIES";
+                opt.disabled = true;
+                select.appendChild(opt);
+            } else {
+                available.forEach(u => {
+                    const opt = document.createElement('option');
+                    opt.value = u.role + " (" + u.name + ")"; // Передаємо "Роль (Ім'я персонажа)"
+                    opt.innerText = u.role + " // " + u.name;
+                    select.appendChild(opt);
+                });
+            }
+        }
+
+        async function nextStep(n) {
+            if(n===2) {
+                if (!loreTest) {
+                    alert("Спочатку пройдіть лорний тест K.I.R.A.");
+                    window.location.href = 'test.html';
+                    return;
+                }
+
+                const data = {
+                    name: document.getElementById('inp-name').value.trim(),
+                    tg: document.getElementById('inp-tg').value.trim(),
+                    faction_pref: document.getElementById('inp-faction').value,
+                    role_pref: document.getElementById('inp-role-pref').value,
+                    lore_test: loreTest,
+                    anon: false,
+                    psy: [],
+                    lore: {}
+                };
+
+                if(!data.name || !data.tg || !data.faction_pref || !data.role_pref) {
+                    alert("FILL ALL REQUIRED FIELDS");
+                    return;
+                }
+
+                const btn = document.querySelector('#step-1 .btn-next');
+                btn.innerText = "SENDING...";
+                btn.disabled = true;
+                
+                try {
+                    const res = await fetch('../register_handler.php', {
+                        method:'POST',
+                        headers:{'Content-Type':'application/json'},
+                        body:JSON.stringify(data)
+                    });
+                    const payload = await res.json().catch(() => ({}));
+                    if (!res.ok || payload.success !== true) {
+                        throw new Error(payload.message || 'SEND ERROR');
+                    }
+
+                    localStorage.removeItem(TEST_STORAGE_KEY);
+                    document.getElementById('step-1').style.display='none';
+                    document.getElementById('step-2').style.display='block';
+                    setTimeout(() => { window.location.href = 'hub.html'; }, 1500);
+                } catch (e) {
+                    btn.innerText = "PROCEED >>";
+                    btn.disabled = false;
+                    alert("SEND FAILED: " + e.message);
+                }
+            }
+        }
+    </script>
+</body>
+</html>
